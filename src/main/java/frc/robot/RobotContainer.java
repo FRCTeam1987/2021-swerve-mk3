@@ -78,9 +78,9 @@ public class RobotContainer {
     // Drive straight for 2 meters and turn left 90 degrees!
     return m_drivetrainSubsystem.followPathCommand(true,
       new Pose2d(0, 0, new Rotation2d(0)),
-      new Pose2d(0.5, 0, Rotation2d.fromDegrees(45.0/2.0)),
+      new Pose2d(0.5, 0, Rotation2d.fromDegrees(22.5)),
       new Pose2d(1, 0, Rotation2d.fromDegrees(45)),
-      new Pose2d(1.5, 0, Rotation2d.fromDegrees(45.0+45.0/2.0)),
+      new Pose2d(1.5, 0, Rotation2d.fromDegrees(67.5)),
       new Pose2d(2, 0, Rotation2d.fromDegrees(90))
     );
   }

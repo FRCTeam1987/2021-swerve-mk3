@@ -9,6 +9,10 @@ import com.kauailabs.navx.frc.AHRS;
 import com.swervedrivespecialties.swervelib.Mk3SwerveModuleHelper;
 import com.swervedrivespecialties.swervelib.SdsModuleConfigurations;
 import com.swervedrivespecialties.swervelib.SwerveModule;
+
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
@@ -18,9 +22,18 @@ import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
 import static frc.robot.Constants.*;
+
+import java.util.List;
 
 public class DrivetrainSubsystem extends SubsystemBase {
   /**
@@ -49,8 +62,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
    * This is a measure of how fast the robot can rotate in place.
    */
   // Here we calculate the theoretical maximum angular velocity. You can also replace this with a measured amount.
-  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = MAX_VELOCITY_METERS_PER_SECOND /
+  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = 3.0 /  // TODO update this from max auto velocity
           Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS / 2.0, DRIVETRAIN_WHEELBASE_METERS / 2.0);
+  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND_SQUARED = MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND;  
 
   private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
           // Front left
@@ -78,6 +92,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
   private ChassisSpeeds m_chassisSpeeds = new ChassisSpeeds(0.0, 0.0, 0.0);
 
   private SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, getAdjustedHeading());
+  private final TrajectoryConfig m_trajectoryConfig = new TrajectoryConfig(3, 3).setKinematics(m_kinematics); // TODO determine good auto max speed / acceleration
 
   public DrivetrainSubsystem() {
     ShuffleboardTab tab = Shuffleboard.getTab("Drivetrain");
@@ -197,6 +212,46 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
   public void drive(ChassisSpeeds chassisSpeeds) {
     m_chassisSpeeds = chassisSpeeds;
+  }
+
+  private TrajectoryConfig getTrajectoryConfig() {
+    return m_trajectoryConfig;
+  }
+
+  private Trajectory generateTrajectory(Pose2d... waypoints) {
+    return TrajectoryGenerator.generateTrajectory(List.of(waypoints), getTrajectoryConfig());
+  }
+
+  public Pose2d getPose() {
+    return m_odometry.getPoseMeters();
+  }
+
+  // Pick back up here with path following constant placeholders
+  public SequentialCommandGroup followPathCommand(final boolean shouldResetOdometry, Pose2d... waypoints) {
+    final PIDController xController = new PIDController(DRIVETRAIN_PX_CONTROLLER, 0, 0);
+    final PIDController yController = new PIDController(DRIVETRAIN_PY_CONTROLLER, 0, 0);
+    ProfiledPIDController thetaController = new ProfiledPIDController(DRIVETRAIN_PTHETA_CONTROLLER, 0, 0, new TrapezoidProfile.Constraints(
+      MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
+      MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND_SQUARED
+    ));
+    thetaController.enableContinuousInput(-Math.PI, Math.PI);
+    final Trajectory trajectory = generateTrajectory(waypoints);
+    return new InstantCommand(() -> {
+      if (shouldResetOdometry) {
+        m_odometry.resetPosition(trajectory.getInitialPose(), getAdjustedHeading());
+      }
+    }).andThen(new SwerveControllerCommand(
+      trajectory,
+      () -> getPose(),
+      m_kinematics,
+      xController,
+      yController,
+      thetaController,
+      (SwerveModuleState[] moduleStates) -> {
+        drive(m_kinematics.toChassisSpeeds(moduleStates));
+      },
+      this
+    )).andThen(() -> drive(new ChassisSpeeds()), this);
   }
 
   @Override

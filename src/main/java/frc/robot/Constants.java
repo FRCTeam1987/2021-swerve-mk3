@@ -50,4 +50,8 @@ public final class Constants {
 
     public static final double FALCON_MAX_RPM = 6380.0;
     public static final int DRIVER_CONTROLLER_PORT = 0;
+
+    public static final double DRIVETRAIN_PX_CONTROLLER = 0.25;  // TODO tune this
+    public static final double DRIVETRAIN_PY_CONTROLLER = DRIVETRAIN_PX_CONTROLLER;
+    public static final double DRIVETRAIN_PTHETA_CONTROLLER = 5;  // TODO tune this
 }

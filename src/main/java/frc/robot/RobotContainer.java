@@ -6,6 +6,8 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -67,8 +69,20 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // An ExampleCommand will run in autonomous
-    return new InstantCommand();
+    // Drive straight for 3 meters!
+    // return m_drivetrainSubsystem.followPathCommand(true,
+    //   new Pose2d(0, 0, new Rotation2d(0)),
+    //   new Pose2d(3, 0, Rotation2d.fromDegrees(0))
+    // );
+
+    // Drive straight for 2 meters and turn left 90 degrees!
+    return m_drivetrainSubsystem.followPathCommand(true,
+      new Pose2d(0, 0, new Rotation2d(0)),
+      new Pose2d(0.5, 0, Rotation2d.fromDegrees(45.0/2.0)),
+      new Pose2d(1, 0, Rotation2d.fromDegrees(45)),
+      new Pose2d(1.5, 0, Rotation2d.fromDegrees(45.0+45.0/2.0)),
+      new Pose2d(2, 0, Rotation2d.fromDegrees(90))
+    );
   }
 
   private static double deadband(double value, double deadband) {

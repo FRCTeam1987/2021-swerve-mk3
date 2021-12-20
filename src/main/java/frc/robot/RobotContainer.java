@@ -61,6 +61,14 @@ public class RobotContainer {
     new Button(m_controller::getBackButton)
             // No requirements because we don't need to interrupt anything
             .whenPressed(m_drivetrainSubsystem::zeroGyroscope);
+    // TODO remove this
+    m_drivetrainSubsystem.followPathCommand(true,
+      new Pose2d(0, 0, new Rotation2d()),
+      new Pose2d(0.5, 0, Rotation2d.fromDegrees(22.5)),
+      new Pose2d(1, 0, Rotation2d.fromDegrees(45)),
+      new Pose2d(1.5, 0, Rotation2d.fromDegrees(67.5)),
+      new Pose2d(2, 0, Rotation2d.fromDegrees(90))
+    );
   }
 
   /**
@@ -77,12 +85,26 @@ public class RobotContainer {
 
     // Drive straight for 2 meters and turn left 90 degrees!
     return m_drivetrainSubsystem.followPathCommand(true,
-      new Pose2d(0, 0, new Rotation2d(0)),
-      new Pose2d(0.5, 0, Rotation2d.fromDegrees(22.5)),
-      new Pose2d(1, 0, Rotation2d.fromDegrees(45)),
-      new Pose2d(1.5, 0, Rotation2d.fromDegrees(67.5)),
+      new Pose2d(0, 0, new Rotation2d()),
+      // new Pose2d(0.25, 0, Rotation2d.fromDegrees(11.25)),
+      // new Pose2d(0.5, 0, Rotation2d.fromDegrees(22.5)),
+      // new Pose2d(0.75, 0, Rotation2d.fromDegrees(33.75)),
+      // new Pose2d(1, 0, Rotation2d.fromDegrees(45)),
+      // new Pose2d(1.25, 0, Rotation2d.fromDegrees(56.25)),
+      // new Pose2d(1.5, 0, Rotation2d.fromDegrees(67.5)),
+      // new Pose2d(1.75, 0, Rotation2d.fromDegrees(78.75)),
+      new Pose2d(1, 0, Rotation2d.fromDegrees(45.0)),
       new Pose2d(2, 0, Rotation2d.fromDegrees(90))
     );
+
+    // Drive forward left, center, right, and center.
+    // return m_drivetrainSubsystem.followPathCommand(true,
+    //   new Pose2d(0, 0, new Rotation2d()),
+    //   new Pose2d(0.5, 0.5, new Rotation2d()),
+    //   new Pose2d(1, 0, new Rotation2d()),
+    //   new Pose2d(1.5, -0.5, new Rotation2d()),
+    //   new Pose2d(2, 0, new Rotation2d())
+    // );
   }
 
   private static double deadband(double value, double deadband) {

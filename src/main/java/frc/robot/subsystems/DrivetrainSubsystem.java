@@ -26,10 +26,15 @@ import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.trajectory.Trajectory.State;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import frc.robot.commands.PathPlannerSwerveControllerCommand;
+import frc.robot.lib.pathplannerlib.PathPlanner;
+import frc.robot.lib.pathplannerlib.PathPlannerTrajectory;
+import frc.robot.lib.pathplannerlib.PathPlannerTrajectory.PathPlannerState;
 
 import static frc.robot.Constants.*;
 
@@ -64,7 +69,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
   // Here we calculate the theoretical maximum angular velocity. You can also replace this with a measured amount.
   public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = 3.0 /  // TODO update this from max auto velocity
           Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS / 2.0, DRIVETRAIN_WHEELBASE_METERS / 2.0);
-  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND_SQUARED = MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND;  
+  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND_SQUARED = MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND / 3.0;  
 
   private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
           // Front left
@@ -235,12 +240,27 @@ public class DrivetrainSubsystem extends SubsystemBase {
       MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND_SQUARED
     ));
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
-    final Trajectory trajectory = generateTrajectory(waypoints);
+    // final Trajectory trajectory = generateTrajectory(waypoints);
+    final PathPlannerTrajectory trajectory = PathPlanner.loadPath("infiniterecharge_center_to_trench", 3, 1.5);
+    double Seconds = 0.0;
+    System.out.println("===== Begin Sampling path =====");
+    while(trajectory.getTotalTimeSeconds() > Seconds) {
+      PathPlannerState state = (PathPlannerState) trajectory.sample(Seconds);
+      System.out.println(
+        "time: " + Seconds
+        + ", x: " + state.poseMeters.getX()
+        + ", y: " + state.poseMeters.getY()
+        + ", angle: " + state.poseMeters.getRotation().getDegrees()
+        + ", holo: " + state.holonomicRotation.getDegrees()
+      );
+    Seconds += 0.25;
+    }
+    System.out.println("===== End Sampling Path =====");
     return new InstantCommand(() -> {
       if (shouldResetOdometry) {
         m_odometry.resetPosition(trajectory.getInitialPose(), getAdjustedHeading());
       }
-    }).andThen(new SwerveControllerCommand(
+    }).andThen(new PathPlannerSwerveControllerCommand(
       trajectory,
       () -> getPose(),
       m_kinematics,

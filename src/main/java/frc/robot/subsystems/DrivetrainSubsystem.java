@@ -67,7 +67,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
    * This is a measure of how fast the robot can rotate in place.
    */
   // Here we calculate the theoretical maximum angular velocity. You can also replace this with a measured amount.
-  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = 3.0 /  // TODO update this from max auto velocity
+  public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = MAX_VELOCITY_METERS_PER_SECOND /  // TODO update this from max auto velocity
           Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS / 2.0, DRIVETRAIN_WHEELBASE_METERS / 2.0);
   public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND_SQUARED = MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND / 3.0;  
 
@@ -232,7 +232,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
   }
 
   // Pick back up here with path following constant placeholders
-  public SequentialCommandGroup followPathCommand(final boolean shouldResetOdometry, Pose2d... waypoints) {
+  public SequentialCommandGroup followPathCommand(final boolean shouldResetOdometry, String trajectoryFileName) {
     final PIDController xController = new PIDController(DRIVETRAIN_PX_CONTROLLER, 0, 0);
     final PIDController yController = new PIDController(DRIVETRAIN_PY_CONTROLLER, 0, 0);
     ProfiledPIDController thetaController = new ProfiledPIDController(DRIVETRAIN_PTHETA_CONTROLLER, 0, 0, new TrapezoidProfile.Constraints(
@@ -241,7 +241,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     ));
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
     // final Trajectory trajectory = generateTrajectory(waypoints);
-    final PathPlannerTrajectory trajectory = PathPlanner.loadPath("infiniterecharge_center_to_trench", 3, 1.5);
+    final PathPlannerTrajectory trajectory = PathPlanner.loadPath(trajectoryFileName, 4, 3.5);
     double Seconds = 0.0;
     System.out.println("===== Begin Sampling path =====");
     while(trajectory.getTotalTimeSeconds() > Seconds) {
@@ -258,7 +258,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
     System.out.println("===== End Sampling Path =====");
     return new InstantCommand(() -> {
       if (shouldResetOdometry) {
-        m_odometry.resetPosition(trajectory.getInitialPose(), getAdjustedHeading());
+        PathPlannerState initialSample = (PathPlannerState) trajectory.sample(0);
+        Pose2d initialPose = new Pose2d(initialSample.poseMeters.getTranslation(), initialSample.holonomicRotation);
+        m_odometry.resetPosition(initialPose, getAdjustedHeading());
       }
     }).andThen(new PathPlannerSwerveControllerCommand(
       trajectory,

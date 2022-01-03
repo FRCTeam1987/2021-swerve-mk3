@@ -6,14 +6,11 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.geometry.Pose2d;
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.commands.RotateToAngle;
 import frc.robot.subsystems.DrivetrainSubsystem;
 
 import static frc.robot.Constants.*;
@@ -43,11 +40,12 @@ public class RobotContainer {
             m_drivetrainSubsystem,
             () -> -modifyAxis(m_controller.getY(GenericHID.Hand.kLeft)) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
             () -> -modifyAxis(m_controller.getX(GenericHID.Hand.kLeft)) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
-            () -> -modifyAxis(m_controller.getX(GenericHID.Hand.kRight)) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND
+            () -> -modifyAxis(m_controller.getX(GenericHID.Hand.kRight)) * (DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND / 2.0)
     ));
 
     // Configure the button bindings
     configureButtonBindings();
+    configureDashboard();
   }
 
   /**
@@ -61,9 +59,13 @@ public class RobotContainer {
     new Button(m_controller::getBackButton)
             // No requirements because we don't need to interrupt anything
             .whenPressed(m_drivetrainSubsystem::zeroGyroscope);
-    // TODO remove this
-    m_drivetrainSubsystem.followPathCommand(true, "2m Figure 8"
-    );
+  }
+
+  public void configureDashboard() {
+    SmartDashboard.putData("Rotate 5", new RotateToAngle(m_drivetrainSubsystem, 5));
+    SmartDashboard.putData("Rotate 45", new RotateToAngle(m_drivetrainSubsystem, 45));
+    SmartDashboard.putData("Rotate 90", new RotateToAngle(m_drivetrainSubsystem, 90));
+    SmartDashboard.putData("Rotate 180", new RotateToAngle(m_drivetrainSubsystem, 180));
   }
 
   /**
@@ -117,7 +119,7 @@ public class RobotContainer {
     value = deadband(value, 0.05);
 
     // Square the axis
-    value = Math.copySign(value * value, value);
+    // value = Math.copySign(value * value, value);
 
     return value;
   }

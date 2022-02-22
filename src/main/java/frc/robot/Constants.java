@@ -3,7 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
-
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.util.Units;
 
 /**
@@ -51,7 +51,27 @@ public final class Constants {
     public static final double FALCON_MAX_RPM = 6380.0;
     public static final int DRIVER_CONTROLLER_PORT = 0;
 
+    public static final int COLLECTOR_MOTOR = 9;
+    public static final int SHOOTER_MOTOR_RIGHT = 10;
+    public static final int SHOOTER_MOTOR_LEFT = 11;
+
+    public static final int STORAGE_BOTTOM_MOTOR = 15;
+    public static final int STORAGE_TOP_MOTOR = 14;
+
+    public static final int STORAGE_BALL_SENSOR = 9; // Move to Storage class
+    public static final double STORAGE_BALL_TIME_DEBOUNCER = 0.1; // Move to Storage class
+
     public static final double DRIVETRAIN_PX_CONTROLLER = 0.25;  // TODO tune this
     public static final double DRIVETRAIN_PY_CONTROLLER = DRIVETRAIN_PX_CONTROLLER;
     public static final double DRIVETRAIN_PTHETA_CONTROLLER = 5;  // TODO tune this
+
+    public static final class Solenoid {
+        public static final int intakeSolenoid = 0;
+        // public static final Solenoid
+    }
+
+    public static final class StorageSubsystem {
+        public static final int startingBallCount = 0; //Change to 1 for field testing for auto
+        public static final int maxBallCount = 2; 
+    }
 }
